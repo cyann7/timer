@@ -12,14 +12,35 @@ final class TimerAppViewModel: ObservableObject {
     @Published var weekPomodoros = 0
     @Published var weekFocusMinutes = 0
 
+    @Published var focusDuration: TimeInterval = 25 * 60 {
+        didSet { Task { await saveSettings() } }
+    }
+    @Published var shortBreakDuration: TimeInterval = 5 * 60 {
+        didSet { Task { await saveSettings() } }
+    }
+    @Published var longBreakDuration: TimeInterval = 15 * 60 {
+        didSet { Task { await saveSettings() } }
+    }
+    @Published var cyclesBeforeLongBreak: Int = 4 {
+        didSet { Task { await saveSettings() } }
+    }
+    @Published var soundEnabled: Bool = true {
+        didSet { Task { await saveSettings() } }
+    }
+    @Published var notificationEnabled: Bool = true {
+        didSet { Task { await saveSettings() } }
+    }
+
     private let repository: SessionRepository
+    private let settingsStore: SettingsStore
     private let presenter = MenuBarPresenter()
     private var coordinator: PomodoroCoordinator?
     private var isBootstrapped = false
     private var ticker: Timer?
 
-    init(repository: SessionRepository = Self.makeDefaultRepository()) {
-        self.repository = repository
+    init(repository: SessionRepository? = nil, settingsStore: SettingsStore? = nil) {
+        self.repository = repository ?? TimerAppViewModel.makeDefaultRepository()
+        self.settingsStore = settingsStore ?? SettingsStore()
     }
 
     var menuBarTitle: String {
@@ -48,12 +69,24 @@ final class TimerAppViewModel: ObservableObject {
 
     func bootstrapIfNeeded() async {
         guard !isBootstrapped else { return }
-        let engine = PomodoroEngine()
-        let notification = NoopNotificationScheduler()
+
+        let loadedSettings = await settingsStore.load()
+        focusDuration = loadedSettings.focusDuration
+        shortBreakDuration = loadedSettings.shortBreakDuration
+        longBreakDuration = loadedSettings.longBreakDuration
+        cyclesBeforeLongBreak = loadedSettings.cyclesBeforeLongBreak
+        soundEnabled = loadedSettings.soundEnabled
+        notificationEnabled = loadedSettings.notificationEnabled
+
+        let engine = PomodoroEngine(settings: loadedSettings)
+        let notification = UserNotificationScheduler()
+        await notification.requestAuthorizationIfNeeded()
+
         coordinator = await PomodoroCoordinator(
             engine: engine,
             repository: repository,
-            notificationScheduler: notification
+            notificationScheduler: notification,
+            settingsStore: settingsStore
         )
         isBootstrapped = true
         refreshFromSnapshot()
@@ -109,6 +142,20 @@ final class TimerAppViewModel: ObservableObject {
     func menuBarSubtitle() -> String {
         guard let coordinator else { return remainingText }
         return presenter.present(snapshot: coordinator.snapshot).subtitle
+    }
+
+    private func saveSettings() async {
+        guard let coordinator else { return }
+        let newSettings = PomodoroSettings(
+            focusDuration: focusDuration,
+            shortBreakDuration: shortBreakDuration,
+            longBreakDuration: longBreakDuration,
+            cyclesBeforeLongBreak: cyclesBeforeLongBreak,
+            soundEnabled: soundEnabled,
+            notificationEnabled: notificationEnabled
+        )
+        await coordinator.updateSettings(newSettings)
+        refreshFromSnapshot()
     }
 
     private func startTicker() {

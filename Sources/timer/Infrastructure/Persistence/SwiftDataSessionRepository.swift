@@ -8,20 +8,21 @@ public actor SwiftDataSessionRepository: SessionRepository {
         self.container = container
     }
 
-    public convenience init(inMemory: Bool = false) throws {
+    public init(inMemory: Bool = false) throws {
         let configuration = ModelConfiguration(isStoredInMemoryOnly: inMemory)
         let container = try ModelContainer(
             for: SwiftDataFocusSessionRecord.self,
             configurations: configuration
         )
-        self.init(container: container)
+        self.container = container
     }
 
     public func save(_ session: FocusSession) async throws {
         let context = ModelContext(container)
+        let sessionId = session.id
         let descriptor = FetchDescriptor<SwiftDataFocusSessionRecord>(
             predicate: #Predicate { record in
-                record.id == session.id
+                record.id == sessionId
             }
         )
         if let existing = try context.fetch(descriptor).first {

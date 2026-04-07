@@ -39,7 +39,7 @@ public struct PomodoroEngineOutput: Sendable, Equatable {
 }
 
 public actor PomodoroEngine {
-    private let settings: PomodoroSettings
+    private var settings: PomodoroSettings
     private var phase: PomodoroPhase
     private var completedFocusCycles: Int
     private var phaseStartedAt: Date?
@@ -50,6 +50,19 @@ public actor PomodoroEngine {
         self.settings = settings
         self.phase = .focus
         self.completedFocusCycles = 0
+    }
+
+    public func updateSettings(_ newSettings: PomodoroSettings) -> PomodoroSnapshot {
+        let wasIdle = phaseEndsAt == nil && pausedRemaining == nil
+        settings = newSettings
+        if wasIdle {
+            // Update displayed remaining time when not running
+        }
+        return snapshot(now: Date())
+    }
+
+    public func currentSettings() -> PomodoroSettings {
+        settings
     }
 
     public func start(at now: Date = Date()) -> PomodoroEngineOutput {

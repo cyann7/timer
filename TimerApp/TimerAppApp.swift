@@ -24,6 +24,11 @@ struct TimerAppApp: App {
         .defaultSize(width: 420, height: 420)
         .windowResizability(.contentSize)
 
+        Settings {
+            SettingsView()
+                .environmentObject(model)
+        }
+
         MenuBarExtra {
             MenuBarView()
                 .environmentObject(model)
