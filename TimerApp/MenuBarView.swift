@@ -2,11 +2,24 @@ import SwiftUI
 
 struct MenuBarView: View {
     @EnvironmentObject private var model: TimerAppViewModel
+    var onOpenMainWindow: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("番茄钟")
-                .font(.headline)
+            HStack {
+                Text("番茄钟")
+                    .font(.headline)
+                Spacer()
+                Button(action: {
+                    onOpenMainWindow?()
+                    NSApp.activate(ignoringOtherApps: true)
+                }) {
+                    Image(systemName: "macwindow")
+                }
+                .buttonStyle(.borderless)
+                .help("打开主窗口")
+            }
+
             Text("\(model.phaseText.capitalized) · \(model.menuBarSubtitle())")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -40,6 +53,12 @@ struct MenuBarView: View {
                 Button("跳过当前阶段") {
                     Task { await model.skip() }
                 }
+            }
+
+            Divider()
+
+            Button("退出") {
+                NSApplication.shared.terminate(nil)
             }
         }
         .padding(12)

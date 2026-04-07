@@ -11,6 +11,17 @@ final class TimerAppViewModel: ObservableObject {
     @Published var isPaused = false
     @Published var weekPomodoros = 0
     @Published var weekFocusMinutes = 0
+    @Published var dailyStats: [DailyStatItem] = []
+    @Published var showPhaseCompletionAlert = false
+    @Published var completedPhaseName: String = ""
+    @Published var nextPhaseAction: String = ""
+
+    struct DailyStatItem: Identifiable {
+        let id = UUID()
+        let date: Date
+        let pomodoros: Int
+        let focusMinutes: Int
+    }
 
     @Published var focusDuration: TimeInterval = 25 * 60 {
         didSet { Task { await saveSettings() } }
@@ -30,6 +41,16 @@ final class TimerAppViewModel: ObservableObject {
     @Published var notificationEnabled: Bool = true {
         didSet { Task { await saveSettings() } }
     }
+    @Published var menuBarShowIcon: Bool = true {
+        didSet { Task { await saveSettings() } }
+    }
+    @Published var menuBarShowTime: Bool = true {
+        didSet { Task { await saveSettings() } }
+    }
+    @Published var menuBarShowSeconds: Bool = false {
+        didSet { Task { await saveSettings() } }
+    }
+    @Published var remainingSeconds: Int = 25 * 60
 
     private let repository: SessionRepository
     private let settingsStore: SettingsStore
@@ -44,7 +65,19 @@ final class TimerAppViewModel: ObservableObject {
     }
 
     var menuBarTitle: String {
-        remainingText
+        var parts: [String] = []
+        if menuBarShowIcon {
+            parts.append("🍅")
+        }
+        if menuBarShowTime {
+            if menuBarShowSeconds {
+                parts.append(remainingText)
+            } else {
+                let minutes = (remainingSeconds + 59) / 60
+                parts.append("\(minutes)m")
+            }
+        }
+        return parts.isEmpty ? "🍅" : parts.joined(separator: " ")
     }
 
     var canStart: Bool {
@@ -77,6 +110,9 @@ final class TimerAppViewModel: ObservableObject {
         cyclesBeforeLongBreak = loadedSettings.cyclesBeforeLongBreak
         soundEnabled = loadedSettings.soundEnabled
         notificationEnabled = loadedSettings.notificationEnabled
+        menuBarShowIcon = loadedSettings.menuBarShowIcon
+        menuBarShowTime = loadedSettings.menuBarShowTime
+        menuBarShowSeconds = loadedSettings.menuBarShowSeconds
 
         let engine = PomodoroEngine(settings: loadedSettings)
         let notification = UserNotificationScheduler()
@@ -125,6 +161,21 @@ final class TimerAppViewModel: ObservableObject {
         refreshFromSnapshot()
     }
 
+    func confirmAndContinue() async {
+        guard let coordinator else { return }
+        await coordinator.confirmAndContinue()
+        showPhaseCompletionAlert = false
+        refreshFromSnapshot()
+        await refreshStatistics()
+    }
+
+    func confirmAndStop() async {
+        guard let coordinator else { return }
+        await coordinator.confirmAndStop()
+        showPhaseCompletionAlert = false
+        refreshFromSnapshot()
+    }
+
     func syncTick() async {
         guard let coordinator else { return }
         try? await coordinator.sync()
@@ -137,6 +188,25 @@ final class TimerAppViewModel: ObservableObject {
         guard let summary = try? await service.loadSummary() else { return }
         weekPomodoros = summary.weekCompletedPomodoros
         weekFocusMinutes = Int(summary.weekTotalFocusDuration / 60)
+
+        // Build daily stats for the past 7 days
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        var stats: [DailyStatItem] = []
+
+        for dayOffset in (0..<7).reversed() {
+            guard let date = calendar.date(byAdding: .day, value: -dayOffset, to: today) else { continue }
+            if let dailyStat = summary.daily.first(where: { calendar.isDate($0.dayStart, inSameDayAs: date) }) {
+                stats.append(DailyStatItem(
+                    date: date,
+                    pomodoros: dailyStat.completedPomodoros,
+                    focusMinutes: Int(dailyStat.totalFocusDuration / 60)
+                ))
+            } else {
+                stats.append(DailyStatItem(date: date, pomodoros: 0, focusMinutes: 0))
+            }
+        }
+        dailyStats = stats
     }
 
     func menuBarSubtitle() -> String {
@@ -152,7 +222,10 @@ final class TimerAppViewModel: ObservableObject {
             longBreakDuration: longBreakDuration,
             cyclesBeforeLongBreak: cyclesBeforeLongBreak,
             soundEnabled: soundEnabled,
-            notificationEnabled: notificationEnabled
+            notificationEnabled: notificationEnabled,
+            menuBarShowIcon: menuBarShowIcon,
+            menuBarShowTime: menuBarShowTime,
+            menuBarShowSeconds: menuBarShowSeconds
         )
         await coordinator.updateSettings(newSettings)
         refreshFromSnapshot()
@@ -172,9 +245,33 @@ final class TimerAppViewModel: ObservableObject {
         guard let coordinator else { return }
         let snapshot = coordinator.snapshot
         phaseText = snapshot.phase.rawValue
-        remainingText = Self.format(seconds: Int(snapshot.remaining))
+        remainingSeconds = Int(snapshot.remaining)
+        remainingText = Self.format(seconds: remainingSeconds)
         isRunning = snapshot.isRunning
         isPaused = snapshot.isPaused
+
+        if snapshot.awaitingConfirmation && !showPhaseCompletionAlert {
+            if let completed = snapshot.completedPhase {
+                completedPhaseName = Self.phaseDisplayName(completed)
+                nextPhaseAction = Self.nextPhaseActionName(completed)
+            }
+            showPhaseCompletionAlert = true
+        }
+    }
+
+    private static func phaseDisplayName(_ phase: PomodoroPhase) -> String {
+        switch phase {
+        case .focus: return "专注"
+        case .shortBreak: return "短休息"
+        case .longBreak: return "长休息"
+        }
+    }
+
+    private static func nextPhaseActionName(_ completedPhase: PomodoroPhase) -> String {
+        switch completedPhase {
+        case .focus: return "开始休息"
+        case .shortBreak, .longBreak: return "开始专注"
+        }
     }
 
     private static func format(seconds: Int) -> String {

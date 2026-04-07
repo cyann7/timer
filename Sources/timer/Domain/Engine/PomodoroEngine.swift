@@ -8,6 +8,8 @@ public struct PomodoroSnapshot: Sendable, Equatable {
     public let completedFocusCycles: Int
     public let phaseStartedAt: Date?
     public let phaseEndsAt: Date?
+    public let awaitingConfirmation: Bool
+    public let completedPhase: PomodoroPhase?
 
     public init(
         phase: PomodoroPhase,
@@ -16,7 +18,9 @@ public struct PomodoroSnapshot: Sendable, Equatable {
         isPaused: Bool,
         completedFocusCycles: Int,
         phaseStartedAt: Date?,
-        phaseEndsAt: Date?
+        phaseEndsAt: Date?,
+        awaitingConfirmation: Bool = false,
+        completedPhase: PomodoroPhase? = nil
     ) {
         self.phase = phase
         self.remaining = remaining
@@ -25,6 +29,8 @@ public struct PomodoroSnapshot: Sendable, Equatable {
         self.completedFocusCycles = completedFocusCycles
         self.phaseStartedAt = phaseStartedAt
         self.phaseEndsAt = phaseEndsAt
+        self.awaitingConfirmation = awaitingConfirmation
+        self.completedPhase = completedPhase
     }
 }
 
@@ -45,6 +51,8 @@ public actor PomodoroEngine {
     private var phaseStartedAt: Date?
     private var phaseEndsAt: Date?
     private var pausedRemaining: TimeInterval?
+    private var awaitingConfirmation: Bool = false
+    private var completedPhase: PomodoroPhase?
 
     public init(settings: PomodoroSettings = .init()) {
         self.settings = settings
@@ -99,9 +107,34 @@ public actor PomodoroEngine {
         guard now >= end else {
             return .init(snapshot: snapshot(now: now), finishedSession: nil)
         }
+        // Phase completed, wait for user confirmation
         let finished = makeFinishedSession(start: phaseStartedAt ?? now, end: end, completed: true)
-        transitionAfterCompletion(at: now)
+        awaitingConfirmation = true
+        completedPhase = phase
+        phaseEndsAt = nil
+        phaseStartedAt = nil
         return .init(snapshot: snapshot(now: now), finishedSession: finished)
+    }
+
+    public func confirmAndContinue(at now: Date = Date()) -> PomodoroEngineOutput {
+        guard awaitingConfirmation else {
+            return .init(snapshot: snapshot(now: now), finishedSession: nil)
+        }
+        awaitingConfirmation = false
+        let previousPhase = completedPhase ?? phase
+        completedPhase = nil
+        transitionAfterCompletion(previousPhase: previousPhase, at: now)
+        return .init(snapshot: snapshot(now: now), finishedSession: nil)
+    }
+
+    public func confirmAndStop(at now: Date = Date()) -> PomodoroEngineOutput {
+        awaitingConfirmation = false
+        completedPhase = nil
+        phaseStartedAt = nil
+        phaseEndsAt = nil
+        pausedRemaining = nil
+        phase = .focus
+        return .init(snapshot: snapshot(now: now), finishedSession: nil)
     }
 
     public func skip(at now: Date = Date()) -> PomodoroEngineOutput {
@@ -133,8 +166,8 @@ public actor PomodoroEngine {
         pausedRemaining = nil
     }
 
-    private func transitionAfterCompletion(at now: Date) {
-        if phase == .focus {
+    private func transitionAfterCompletion(previousPhase: PomodoroPhase, at now: Date) {
+        if previousPhase == .focus {
             completedFocusCycles += 1
             if completedFocusCycles % settings.cyclesBeforeLongBreak == 0 {
                 beginPhase(.longBreak, at: now)
@@ -180,7 +213,9 @@ public actor PomodoroEngine {
             isPaused: pausedRemaining != nil,
             completedFocusCycles: completedFocusCycles,
             phaseStartedAt: phaseStartedAt,
-            phaseEndsAt: phaseEndsAt
+            phaseEndsAt: phaseEndsAt,
+            awaitingConfirmation: awaitingConfirmation,
+            completedPhase: completedPhase
         )
     }
 }

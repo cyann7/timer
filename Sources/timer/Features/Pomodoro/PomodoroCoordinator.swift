@@ -66,6 +66,19 @@ public final class PomodoroCoordinator {
         }
     }
 
+    public func confirmAndContinue(now: Date = Date()) async {
+        let output = await engine.confirmAndContinue(at: now)
+        snapshot = output.snapshot
+        if let end = snapshot.phaseEndsAt {
+            let settings = await settingsStore.load()
+            await notificationScheduler.schedulePhaseFinishedNotification(phase: snapshot.phase, fireAt: end, settings: settings)
+        }
+    }
+
+    public func confirmAndStop(now: Date = Date()) async {
+        snapshot = await engine.confirmAndStop(at: now).snapshot
+    }
+
     public func updateSettings(_ newSettings: PomodoroSettings) async {
         await settingsStore.update(newSettings)
         snapshot = await engine.updateSettings(newSettings)

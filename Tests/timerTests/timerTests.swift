@@ -20,8 +20,14 @@ import Foundation
     #expect(done.finishedSession != nil)
     #expect(done.finishedSession?.phase == .focus)
     #expect(done.finishedSession?.completed == true)
-    #expect(done.snapshot.phase == .shortBreak)
-    #expect(done.snapshot.completedFocusCycles == 1)
+    #expect(done.snapshot.awaitingConfirmation == true)
+    #expect(done.snapshot.completedPhase == .focus)
+
+    // User confirms to continue
+    let confirmed = await engine.confirmAndContinue(at: start.addingTimeInterval(62))
+    #expect(confirmed.snapshot.phase == .shortBreak)
+    #expect(confirmed.snapshot.completedFocusCycles == 1)
+    #expect(confirmed.snapshot.awaitingConfirmation == false)
 }
 
 @Test func statisticsAggregatorSummarizesFocusSessions() {

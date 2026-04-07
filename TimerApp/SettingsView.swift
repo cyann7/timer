@@ -33,9 +33,17 @@ struct SettingsView: View {
                 Toggle("启用声音", isOn: $model.soundEnabled)
                 Toggle("启用通知", isOn: $model.notificationEnabled)
             }
+
+            Section("菜单栏设置") {
+                Toggle("显示图标", isOn: $model.menuBarShowIcon)
+                Toggle("显示时间", isOn: $model.menuBarShowTime)
+                if model.menuBarShowTime {
+                    Toggle("显示秒数", isOn: $model.menuBarShowSeconds)
+                }
+            }
         }
         .formStyle(.grouped)
-        .frame(width: 350, height: 380)
+        .frame(width: 350, height: 450)
         .padding()
     }
 }
