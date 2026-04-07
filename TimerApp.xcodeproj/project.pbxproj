@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		61CFB43E2F7CAC6600C50BC6 /* timer in Frameworks */ = {isa = PBXBuildFile; productRef = 61CFB43D2F7CAC6600C50BC6 /* timer */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		61CFB42D2F7CAA7400C50BC6 /* TimerApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimerApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				61CFB43E2F7CAC6600C50BC6 /* timer in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,6 +38,7 @@
 			isa = PBXGroup;
 			children = (
 				61CFB42F2F7CAA7400C50BC6 /* TimerApp */,
+				61CFB43B2F7CAB2600C50BC6 /* Frameworks */,
 				61CFB42E2F7CAA7400C50BC6 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -43,6 +49,13 @@
 				61CFB42D2F7CAA7400C50BC6 /* TimerApp.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		61CFB43B2F7CAB2600C50BC6 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -65,6 +78,7 @@
 			);
 			name = TimerApp;
 			packageProductDependencies = (
+				61CFB43D2F7CAC6600C50BC6 /* timer */,
 			);
 			productName = TimerApp;
 			productReference = 61CFB42D2F7CAA7400C50BC6 /* TimerApp.app */;
@@ -95,6 +109,9 @@
 			mainGroup = 61CFB4242F7CAA7400C50BC6;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
+			packageReferences = (
+				61CFB43C2F7CAB2600C50BC6 /* timer */,
+			);
 			productRefGroup = 61CFB42E2F7CAA7400C50BC6 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -270,9 +287,8 @@
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = macosx;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -312,9 +328,8 @@
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = macosx;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -345,6 +360,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		61CFB43C2F7CAB2600C50BC6 /* timer */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = .;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		61CFB43D2F7CAC6600C50BC6 /* timer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 61CFB43C2F7CAB2600C50BC6 /* timer */;
+			productName = timer;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 61CFB4252F7CAA7400C50BC6 /* Project object */;
 }
