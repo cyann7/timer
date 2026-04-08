@@ -11,11 +11,11 @@ public actor UserNotificationScheduler: NotificationScheduling {
     public func requestAuthorizationIfNeeded() async {
         let settings = await notificationCenter.notificationSettings()
         guard settings.authorizationStatus == .notDetermined else { return }
-        _ = try? await notificationCenter.requestAuthorization(options: [.alert, .sound])
+        _ = try? await notificationCenter.requestAuthorization(options: [.alert, .sound, .badge])
     }
 
     public func schedulePhaseFinishedNotification(phase: PomodoroPhase, fireAt: Date, settings: PomodoroSettings) async {
-        guard settings.notificationEnabled || settings.soundEnabled else { return }
+        guard settings.notificationEnabled else { return }
 
         await cancelPendingNotifications()
 
@@ -25,6 +25,9 @@ public actor UserNotificationScheduler: NotificationScheduling {
 
         if settings.soundEnabled {
             content.sound = .default
+        }
+        if #available(macOS 12.0, *) {
+            content.interruptionLevel = .timeSensitive
         }
 
         let interval = max(fireAt.timeIntervalSinceNow, 0.1)

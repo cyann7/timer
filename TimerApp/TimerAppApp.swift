@@ -8,6 +8,7 @@
 import SwiftUI
 import AppKit
 import Combine
+import UserNotifications
 
 extension Notification.Name {
     static let openMainWindow = Notification.Name("openMainWindow")
@@ -46,6 +47,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var model: TimerAppViewModel?
     private var cancellables = Set<AnyCancellable>()
+    private let notificationDelegate = NotificationDelegate()
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        UNUserNotificationCenter.current().delegate = notificationDelegate
+    }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
@@ -164,6 +170,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func quitApp() {
         NSApplication.shared.terminate(nil)
+    }
+}
+
+private final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        // Ensure phase reminders still appear while app is in foreground.
+        [.banner, .list, .sound]
     }
 }
 

@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import AppKit
 import timer
 
 @MainActor
@@ -255,6 +256,10 @@ final class TimerAppViewModel: ObservableObject {
         isPaused = snapshot.isPaused
 
         if snapshot.awaitingConfirmation && !showPhaseCompletionAlert {
+            NSApplication.shared.requestUserAttention(.criticalRequest)
+            if soundEnabled {
+                NSSound.beep()
+            }
             if let completed = snapshot.completedPhase {
                 completedPhaseName = Self.phaseDisplayName(completed)
                 nextPhaseAction = Self.nextPhaseActionName(completed)
