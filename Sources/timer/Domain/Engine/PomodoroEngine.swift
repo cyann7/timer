@@ -144,7 +144,8 @@ public actor PomodoroEngine {
         } else {
             finished = nil
         }
-        transitionAfterSkip(at: now)
+        let wasRunning = phaseEndsAt != nil || pausedRemaining != nil
+        transitionAfterSkip(at: now, autoStart: wasRunning)
         return .init(snapshot: snapshot(now: now), finishedSession: finished)
     }
 
@@ -179,12 +180,20 @@ public actor PomodoroEngine {
         beginPhase(.focus, at: now)
     }
 
-    private func transitionAfterSkip(at now: Date) {
+    private func transitionAfterSkip(at now: Date, autoStart: Bool) {
         if phase == .focus {
-            beginPhase(.shortBreak, at: now)
+            if autoStart {
+                beginPhase(.shortBreak, at: now)
+            } else {
+                phase = .shortBreak
+            }
             return
         }
-        beginPhase(.focus, at: now)
+        if autoStart {
+            beginPhase(.focus, at: now)
+        } else {
+            phase = .focus
+        }
     }
 
     private func makeFinishedSession(start: Date, end: Date, completed: Bool) -> FocusSession {

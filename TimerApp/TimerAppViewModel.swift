@@ -100,6 +100,10 @@ final class TimerAppViewModel: ObservableObject {
         isRunning || isPaused
     }
 
+    var canSkipBeforeStart: Bool {
+        !isRunning && !isPaused && phaseText != "focus"
+    }
+
     func bootstrapIfNeeded() async {
         guard !isBootstrapped else { return }
 

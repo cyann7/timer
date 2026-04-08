@@ -9,11 +9,15 @@ import SwiftUI
 import AppKit
 import Combine
 
+extension Notification.Name {
+    static let openMainWindow = Notification.Name("openMainWindow")
+}
+
 @main
 struct TimerAppApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var model = TimerAppViewModel()
-    @State private var alertWindow: NSWindow?
+    @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
         Window("Timer", id: "main-window") {
@@ -24,10 +28,8 @@ struct TimerAppApp: App {
                     appDelegate.setupStatusBar(model: model)
                 }
                 .background(FixedWindowConfigurator())
-                .onReceive(model.$showPhaseCompletionAlert) { show in
-                    if show {
-                        showAlertWindow()
-                    }
+                .onReceive(NotificationCenter.default.publisher(for: .openMainWindow)) { _ in
+                    openWindow(id: "main-window")
                 }
         }
         .defaultSize(width: 420, height: 420)
@@ -38,33 +40,6 @@ struct TimerAppApp: App {
                 .environmentObject(model)
         }
     }
-
-    private func showAlertWindow() {
-        if alertWindow != nil { return }
-
-        let contentView = PhaseCompletionView()
-            .environmentObject(model)
-            .onDisappear {
-                alertWindow?.close()
-                alertWindow = nil
-            }
-
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 350, height: 280),
-            styleMask: [.titled, .closable],
-            backing: .buffered,
-            defer: false
-        )
-        window.title = "阶段完成"
-        window.contentView = NSHostingView(rootView: contentView)
-        window.center()
-        window.level = .floating
-        window.isReleasedWhenClosed = false
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
-
-        alertWindow = window
-    }
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -73,7 +48,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var cancellables = Set<AnyCancellable>()
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        true
+        false
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag {
+            openMainWindow()
+        }
+        return true
     }
 
     @MainActor
@@ -116,9 +98,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func openMainWindow() {
-        if let window = NSApp.windows.first(where: { $0.title == "Timer" }) {
+        // Try to find and show existing window
+        if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "main-window" || $0.title == "Timer" }) {
             window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
         }
+        // Post notification to open window via SwiftUI
+        NotificationCenter.default.post(name: .openMainWindow, object: nil)
         NSApp.activate(ignoringOtherApps: true)
     }
 

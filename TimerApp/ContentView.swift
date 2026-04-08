@@ -8,9 +8,43 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var model: TimerAppViewModel
+    @State private var selectedTab: Tab = .timer
+
+    enum Tab {
+        case timer
+        case statistics
+    }
 
     var body: some View {
+        if model.showPhaseCompletionAlert {
+            PhaseCompletionView()
+                .environmentObject(model)
+        } else {
+            VStack(spacing: 0) {
+                Picker("", selection: $selectedTab) {
+                    Text("计时").tag(Tab.timer)
+                    Text("统计").tag(Tab.statistics)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+
+                switch selectedTab {
+                case .timer:
+                    timerView
+                case .statistics:
+                    StatisticsView()
+                        .padding(24)
+                }
+            }
+            .frame(minWidth: 420, idealWidth: 420, minHeight: 420, idealHeight: 420)
+        }
+    }
+
+    private var timerView: some View {
         VStack(spacing: 16) {
+            Spacer()
+
             Text(model.phaseText.capitalized)
                 .font(.title2.weight(.semibold))
 
@@ -24,6 +58,13 @@ struct ContentView: View {
                         Task { await model.start() }
                     }
                     .buttonStyle(.borderedProminent)
+
+                    if model.canSkipBeforeStart {
+                        Button("跳过") {
+                            Task { await model.skip() }
+                        }
+                        .buttonStyle(.bordered)
+                    }
                 }
 
                 if model.canPause {
@@ -55,11 +96,8 @@ struct ContentView: View {
                 }
             }
 
-            Divider()
-
-            StatisticsView()
+            Spacer()
         }
         .padding(24)
-        .frame(minWidth: 420, idealWidth: 420, minHeight: 420, idealHeight: 420)
     }
 }

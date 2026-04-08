@@ -2,10 +2,26 @@ import SwiftUI
 
 struct PhaseCompletionView: View {
     @EnvironmentObject private var model: TimerAppViewModel
-    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(spacing: 24) {
+            HStack {
+                Button(action: {
+                    Task {
+                        await model.confirmAndStop()
+                    }
+                }) {
+                    Image(systemName: "chevron.left")
+                    Text("返回")
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(.secondary)
+
+                Spacer()
+            }
+
+            Spacer()
+
             Text("🍅")
                 .font(.system(size: 60))
 
@@ -17,33 +33,20 @@ struct PhaseCompletionView: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
-            HStack(spacing: 16) {
-                Button(action: {
-                    Task {
-                        await model.confirmAndStop()
-                        dismiss()
-                    }
-                }) {
-                    Text("结束")
-                        .frame(width: 100)
+            Button(action: {
+                Task {
+                    await model.confirmAndContinue()
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-
-                Button(action: {
-                    Task {
-                        await model.confirmAndContinue()
-                        dismiss()
-                    }
-                }) {
-                    Text(model.nextPhaseAction)
-                        .frame(width: 100)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+            }) {
+                Text(model.nextPhaseAction)
+                    .frame(width: 120)
             }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+
+            Spacer()
         }
-        .padding(40)
-        .frame(minWidth: 300, minHeight: 250)
+        .padding(24)
+        .frame(minWidth: 420, idealWidth: 420, minHeight: 420, idealHeight: 420)
     }
 }

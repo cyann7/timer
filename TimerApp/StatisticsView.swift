@@ -5,14 +5,14 @@ struct StatisticsView: View {
     @EnvironmentObject private var model: TimerAppViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             Text("本周统计")
-                .font(.headline)
+                .font(.title2.weight(.semibold))
 
-            HStack {
+            HStack(spacing: 24) {
                 StatCard(title: "完成番茄数", value: "\(model.weekPomodoros)")
-                Spacer()
                 StatCard(title: "专注分钟", value: "\(model.weekFocusMinutes)")
+                Spacer()
             }
 
             if !model.dailyStats.isEmpty {
@@ -25,20 +25,24 @@ struct StatisticsView: View {
                     .cornerRadius(4)
                 }
                 .chartXAxis {
-                    AxisMarks(values: .stride(by: .day)) { value in
+                    AxisMarks(values: .stride(by: .day)) { _ in
                         AxisValueLabel(format: .dateTime.weekday(.abbreviated))
                     }
                 }
                 .chartYAxis {
-                    AxisMarks(position: .leading) { value in
+                    AxisMarks(position: .leading) { _ in
                         AxisGridLine()
                         AxisValueLabel()
                     }
                 }
-                .frame(height: 120)
+                .frame(maxHeight: .infinity)
+            } else {
+                Text("暂无数据")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
 
@@ -52,7 +56,7 @@ private struct StatCard: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.title3.weight(.semibold))
+                .font(.title.weight(.semibold))
         }
     }
 }
