@@ -41,6 +41,35 @@ open TimerApp.xcodeproj
 ```
 4. 选择 `TimerApp` scheme，运行 macOS target（产物名称为 `Tomatime`）。
 
+## DMG 安装说明（重要）
+### 1. 下载与安装
+1. 在 GitHub Release 页面下载最新 `Tomatime-*.dmg`
+2. 双击打开 `dmg`
+3. 将 `Tomatime.app` 拖到 `Applications` 文件夹
+
+### 2. 首次打开可能被系统拦截（请先看这里）
+本应用由个人开发者发布，当前**未使用付费 Apple Developer 账号进行签名与公证**。  
+因此 macOS 可能提示“无法打开 App”或“Apple 无法验证是否包含恶意软件”。
+
+这不是应用损坏，属于系统 Gatekeeper 的默认安全拦截。
+
+### 3. 解决流程（推荐）
+1. 在 Finder 中找到 `Applications/Tomatime.app`
+2. 右键（或 `Control` + 点击）`Tomatime.app`，选择“打开”
+3. 在弹窗中再次点击“打开”
+
+如果仍然被拦截：
+1. 打开“系统设置” -> “隐私与安全性”
+2. 在页面底部找到被拦截提示，点击“仍要打开”
+3. 再次尝试启动 `Tomatime`
+
+### 4. 终端方式（可选，仅高级用户）
+如果你明确确认来源可信，也可以移除下载隔离标记：
+```bash
+xattr -dr com.apple.quarantine /Applications/Tomatime.app
+```
+执行后再打开应用即可。
+
 ## 主要功能说明
 - 关闭主窗口不会退出应用，计时继续进行
 - 点击状态栏图标或 Dock 图标可恢复主窗口
