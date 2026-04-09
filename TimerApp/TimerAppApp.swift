@@ -21,7 +21,7 @@ struct TimerAppApp: App {
     @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
-        Window("Timer", id: "main-window") {
+        Window("Tomatime", id: "main-window") {
             ContentView()
                 .environmentObject(model)
                 .task {
@@ -105,7 +105,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func openMainWindow() {
         // Try to find and show existing window
-        if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "main-window" || $0.title == "Timer" }) {
+        if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "main-window" || $0.title == "Tomatime" }) {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
@@ -124,14 +124,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     let startItem = NSMenuItem(title: "开始", action: #selector(startTimer), keyEquivalent: "")
                     startItem.target = self
                     menu.addItem(startItem)
+                    if model.canSkipBeforeStart {
+                        let skipItem = NSMenuItem(title: "跳过", action: #selector(skipTimer), keyEquivalent: "")
+                        skipItem.target = self
+                        menu.addItem(skipItem)
+                    }
                 } else if model.canPause {
                     let pauseItem = NSMenuItem(title: "暂停", action: #selector(pauseTimer), keyEquivalent: "")
                     pauseItem.target = self
                     menu.addItem(pauseItem)
+                    let terminateItem = NSMenuItem(title: "终止", action: #selector(terminateTimer), keyEquivalent: "")
+                    terminateItem.target = self
+                    menu.addItem(terminateItem)
                 } else if model.canResume {
                     let resumeItem = NSMenuItem(title: "继续", action: #selector(resumeTimer), keyEquivalent: "")
                     resumeItem.target = self
                     menu.addItem(resumeItem)
+                    let terminateItem = NSMenuItem(title: "终止", action: #selector(terminateTimer), keyEquivalent: "")
+                    terminateItem.target = self
+                    menu.addItem(terminateItem)
                 }
             }
 
@@ -165,6 +176,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard let model = model else { return }
         Task { @MainActor in
             await model.resume()
+        }
+    }
+
+    @objc private func skipTimer() {
+        guard let model = model else { return }
+        Task { @MainActor in
+            await model.skip()
+        }
+    }
+
+    @objc private func terminateTimer() {
+        guard let model = model else { return }
+        Task { @MainActor in
+            await model.terminate()
         }
     }
 

@@ -104,3 +104,41 @@ import Foundation
     #expect(stopped.isPaused == false)
     #expect(stopped.remaining == 120)
 }
+
+@Test func pomodoroEngineTerminateDoesNotAutoStartNextPhase() async {
+    let settings = PomodoroSettings(
+        focusDuration: 120,
+        shortBreakDuration: 30,
+        longBreakDuration: 90,
+        cyclesBeforeLongBreak: 2
+    )
+    let engine = PomodoroEngine(settings: settings)
+    let start = Date(timeIntervalSince1970: 40_000)
+
+    _ = await engine.start(at: start)
+    let terminated = await engine.terminate(at: start.addingTimeInterval(20)).snapshot
+
+    #expect(terminated.phase == .shortBreak)
+    #expect(terminated.isRunning == false)
+    #expect(terminated.isPaused == false)
+    #expect(terminated.remaining == 30)
+}
+
+@Test func pomodoroEngineCanStartAnotherPomodoroAfterFocusCompletion() async {
+    let settings = PomodoroSettings(
+        focusDuration: 60,
+        shortBreakDuration: 30,
+        longBreakDuration: 90,
+        cyclesBeforeLongBreak: 2
+    )
+    let engine = PomodoroEngine(settings: settings)
+    let start = Date(timeIntervalSince1970: 50_000)
+
+    _ = await engine.start(at: start)
+    _ = await engine.sync(at: start.addingTimeInterval(61))
+    let continued = await engine.confirmAndStartAnotherPomodoro(at: start.addingTimeInterval(62)).snapshot
+
+    #expect(continued.phase == .focus)
+    #expect(continued.isRunning == true)
+    #expect(continued.completedFocusCycles == 1)
+}

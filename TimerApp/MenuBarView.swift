@@ -20,7 +20,7 @@ struct MenuBarView: View {
                 .help("打开主窗口")
             }
 
-            Text("\(model.phaseText.capitalized) · \(model.menuBarSubtitle())")
+            Text("\(model.phaseText) · \(model.menuBarSubtitle())")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -40,18 +40,10 @@ struct MenuBarView: View {
                         Task { await model.resume() }
                     }
                 }
-                if model.canStop {
-                    Button("停止") {
-                        Task { await model.stop() }
+                if model.canTerminate {
+                    Button("终止") {
+                        Task { await model.terminate() }
                     }
-                }
-            }
-
-            Divider()
-
-            if model.canSkip {
-                Button("跳过当前阶段") {
-                    Task { await model.skip() }
                 }
             }
 

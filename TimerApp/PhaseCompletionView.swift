@@ -44,6 +44,20 @@ struct PhaseCompletionView: View {
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
 
+            if model.canStartAnotherPomodoro {
+                Button(action: {
+                    Task {
+                        await model.confirmAndStartAnotherPomodoro()
+                    }
+                }) {
+                    Text("再来颗番茄")
+                        .frame(width: 120)
+                }
+                .buttonStyle(.bordered)
+                .tint(.gray)
+                .controlSize(.large)
+            }
+
             Spacer()
         }
         .padding(24)

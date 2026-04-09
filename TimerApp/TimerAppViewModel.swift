@@ -6,7 +6,7 @@ import timer
 
 @MainActor
 final class TimerAppViewModel: ObservableObject {
-    @Published var phaseText = "focus"
+    @Published var phaseText = "专注"
     @Published var remainingText = "25:00"
     @Published var isRunning = false
     @Published var isPaused = false
@@ -16,6 +16,7 @@ final class TimerAppViewModel: ObservableObject {
     @Published var showPhaseCompletionAlert = false
     @Published var completedPhaseName: String = ""
     @Published var nextPhaseAction: String = ""
+    @Published var canStartAnotherPomodoro: Bool = false
 
     struct DailyStatItem: Identifiable {
         let id = UUID()
@@ -93,16 +94,12 @@ final class TimerAppViewModel: ObservableObject {
         isPaused
     }
 
-    var canStop: Bool {
-        isPaused
-    }
-
-    var canSkip: Bool {
+    var canTerminate: Bool {
         isRunning || isPaused
     }
 
     var canSkipBeforeStart: Bool {
-        !isRunning && !isPaused && phaseText != "focus"
+        !isRunning && !isPaused
     }
 
     func bootstrapIfNeeded() async {
@@ -160,15 +157,24 @@ final class TimerAppViewModel: ObservableObject {
         await refreshStatistics()
     }
 
-    func stop() async {
+    func terminate() async {
         guard let coordinator else { return }
-        await coordinator.stop()
+        try? await coordinator.terminate()
         refreshFromSnapshot()
+        await refreshStatistics()
     }
 
     func confirmAndContinue() async {
         guard let coordinator else { return }
         await coordinator.confirmAndContinue()
+        showPhaseCompletionAlert = false
+        refreshFromSnapshot()
+        await refreshStatistics()
+    }
+
+    func confirmAndStartAnotherPomodoro() async {
+        guard let coordinator else { return }
+        await coordinator.confirmAndStartAnotherPomodoro()
         showPhaseCompletionAlert = false
         refreshFromSnapshot()
         await refreshStatistics()
@@ -249,7 +255,7 @@ final class TimerAppViewModel: ObservableObject {
     private func refreshFromSnapshot() {
         guard let coordinator else { return }
         let snapshot = coordinator.snapshot
-        phaseText = snapshot.phase.rawValue
+        phaseText = Self.phaseDisplayName(snapshot.phase)
         remainingSeconds = Int(snapshot.remaining)
         remainingText = Self.format(seconds: remainingSeconds)
         isRunning = snapshot.isRunning
@@ -263,8 +269,13 @@ final class TimerAppViewModel: ObservableObject {
             if let completed = snapshot.completedPhase {
                 completedPhaseName = Self.phaseDisplayName(completed)
                 nextPhaseAction = Self.nextPhaseActionName(completed)
+                canStartAnotherPomodoro = completed == .focus
+            } else {
+                canStartAnotherPomodoro = false
             }
             showPhaseCompletionAlert = true
+        } else if !snapshot.awaitingConfirmation {
+            canStartAnotherPomodoro = false
         }
     }
 

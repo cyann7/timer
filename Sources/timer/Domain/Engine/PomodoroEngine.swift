@@ -137,16 +137,20 @@ public actor PomodoroEngine {
         return .init(snapshot: snapshot(now: now), finishedSession: nil)
     }
 
-    public func skip(at now: Date = Date()) -> PomodoroEngineOutput {
+    public func terminate(at now: Date = Date()) -> PomodoroEngineOutput {
         let finished: FocusSession?
         if let start = phaseStartedAt {
             finished = makeFinishedSession(start: start, end: now, completed: false)
         } else {
             finished = nil
         }
-        let wasRunning = phaseEndsAt != nil || pausedRemaining != nil
-        transitionAfterSkip(at: now, autoStart: wasRunning)
+        transitionAfterTerminate()
         return .init(snapshot: snapshot(now: now), finishedSession: finished)
+    }
+
+    // Backward-compatible alias; behavior now matches terminate.
+    public func skip(at now: Date = Date()) -> PomodoroEngineOutput {
+        terminate(at: now)
     }
 
     public func stop(at now: Date = Date()) -> PomodoroEngineOutput {
@@ -158,6 +162,23 @@ public actor PomodoroEngine {
 
     public func currentSnapshot(at now: Date = Date()) -> PomodoroSnapshot {
         snapshot(now: now)
+    }
+
+    public func confirmAndStartAnotherPomodoro(at now: Date = Date()) -> PomodoroEngineOutput {
+        guard awaitingConfirmation else {
+            return .init(snapshot: snapshot(now: now), finishedSession: nil)
+        }
+
+        let previousPhase = completedPhase ?? phase
+        guard previousPhase == .focus else {
+            return confirmAndContinue(at: now)
+        }
+
+        awaitingConfirmation = false
+        completedPhase = nil
+        completedFocusCycles += 1
+        beginPhase(.focus, at: now)
+        return .init(snapshot: snapshot(now: now), finishedSession: nil)
     }
 
     private func beginPhase(_ phase: PomodoroPhase, at now: Date) {
@@ -180,20 +201,18 @@ public actor PomodoroEngine {
         beginPhase(.focus, at: now)
     }
 
-    private func transitionAfterSkip(at now: Date, autoStart: Bool) {
+    private func transitionAfterTerminate() {
+        phaseStartedAt = nil
+        phaseEndsAt = nil
+        pausedRemaining = nil
+        awaitingConfirmation = false
+        completedPhase = nil
+
         if phase == .focus {
-            if autoStart {
-                beginPhase(.shortBreak, at: now)
-            } else {
-                phase = .shortBreak
-            }
+            phase = .shortBreak
             return
         }
-        if autoStart {
-            beginPhase(.focus, at: now)
-        } else {
-            phase = .focus
-        }
+        phase = .focus
     }
 
     private func makeFinishedSession(start: Date, end: Date, completed: Bool) -> FocusSession {

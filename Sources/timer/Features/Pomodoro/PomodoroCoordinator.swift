@@ -44,13 +44,18 @@ public final class PomodoroCoordinator {
         }
     }
 
-    public func skip(now: Date = Date()) async throws {
-        let output = await engine.skip(at: now)
+    public func terminate(now: Date = Date()) async throws {
+        let output = await engine.terminate(at: now)
         snapshot = output.snapshot
         await notificationScheduler.cancelPendingNotifications()
         if let session = output.finishedSession {
             try await repository.save(session)
         }
+    }
+
+    // Backward-compatible alias.
+    public func skip(now: Date = Date()) async throws {
+        try await terminate(now: now)
     }
 
     public func stop(now: Date = Date()) async {
@@ -68,6 +73,15 @@ public final class PomodoroCoordinator {
 
     public func confirmAndContinue(now: Date = Date()) async {
         let output = await engine.confirmAndContinue(at: now)
+        snapshot = output.snapshot
+        if let end = snapshot.phaseEndsAt {
+            let settings = await settingsStore.load()
+            await notificationScheduler.schedulePhaseFinishedNotification(phase: snapshot.phase, fireAt: end, settings: settings)
+        }
+    }
+
+    public func confirmAndStartAnotherPomodoro(now: Date = Date()) async {
+        let output = await engine.confirmAndStartAnotherPomodoro(at: now)
         snapshot = output.snapshot
         if let end = snapshot.phaseEndsAt {
             let settings = await settingsStore.load()

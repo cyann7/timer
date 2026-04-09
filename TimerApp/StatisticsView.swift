@@ -1,5 +1,4 @@
 import SwiftUI
-import Charts
 
 struct StatisticsView: View {
     @EnvironmentObject private var model: TimerAppViewModel
@@ -7,7 +6,7 @@ struct StatisticsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("本周统计")
-                .font(.title2.weight(.semibold))
+                .font(.title.weight(.semibold))
 
             HStack(spacing: 24) {
                 StatCard(title: "完成番茄数", value: "\(model.weekPomodoros)")
@@ -16,26 +15,12 @@ struct StatisticsView: View {
             }
 
             if !model.dailyStats.isEmpty {
-                Chart(model.dailyStats) { item in
-                    BarMark(
-                        x: .value("日期", item.date, unit: .day),
-                        y: .value("番茄数", item.pomodoros)
-                    )
-                    .foregroundStyle(Color.red.gradient)
-                    .cornerRadius(4)
-                }
-                .chartXAxis {
-                    AxisMarks(values: .stride(by: .day)) { _ in
-                        AxisValueLabel(format: .dateTime.weekday(.abbreviated))
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(model.dailyStats) { item in
+                        DailyTomatoRow(item: item)
                     }
                 }
-                .chartYAxis {
-                    AxisMarks(position: .leading) { _ in
-                        AxisGridLine()
-                        AxisValueLabel()
-                    }
-                }
-                .frame(maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             } else {
                 Text("暂无数据")
                     .foregroundStyle(.secondary)
@@ -46,6 +31,39 @@ struct StatisticsView: View {
     }
 }
 
+private struct DailyTomatoRow: View {
+    let item: TimerAppViewModel.DailyStatItem
+    private static let weekdayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = "E"
+        return formatter
+    }()
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text(Self.weekdayFormatter.string(from: item.date))
+                .font(.body.weight(.medium))
+                .foregroundStyle(.secondary)
+                .frame(width: 42, alignment: .leading)
+
+            if item.pomodoros > 0 {
+                HStack(spacing: 4) {
+                    ForEach(0..<item.pomodoros, id: \.self) { _ in
+                        Text("🍅")
+                            .font(.title3)
+                    }
+                }
+            }
+
+            Spacer(minLength: 0)
+            Text("\(item.pomodoros)")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
 private struct StatCard: View {
     let title: String
     let value: String
@@ -53,10 +71,10 @@ private struct StatCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.caption)
+                .font(.body)
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.title.weight(.semibold))
+                .font(.title2.weight(.semibold))
         }
     }
 }

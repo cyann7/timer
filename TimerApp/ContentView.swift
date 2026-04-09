@@ -9,6 +9,9 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject private var model: TimerAppViewModel
     @State private var selectedTab: Tab = .timer
+    private let tabHeaderTopPadding: CGFloat = 16
+    private let tabSwitcherHeight: CGFloat = 28
+    private let tabHeaderHeight: CGFloat = 56
 
     enum Tab {
         case timer
@@ -20,37 +23,64 @@ struct ContentView: View {
             PhaseCompletionView()
                 .environmentObject(model)
         } else {
-            VStack(spacing: 0) {
-                Picker("", selection: $selectedTab) {
-                    Text("计时").tag(Tab.timer)
-                    Text("统计").tag(Tab.statistics)
+            GeometryReader { proxy in
+                VStack(spacing: 0) {
+                    tabSwitcher
+                    tabContent
+                        .frame(
+                            width: proxy.size.width,
+                            height: max(0, proxy.size.height - tabHeaderHeight),
+                            alignment: .topLeading
+                        )
                 }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 24)
-                .padding(.top, 16)
-
-                switch selectedTab {
-                case .timer:
-                    timerView
-                case .statistics:
-                    StatisticsView()
-                        .padding(24)
-                }
+                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
             }
-            .frame(minWidth: 420, idealWidth: 420, minHeight: 420, idealHeight: 420)
+            .frame(minWidth: 420, idealWidth: 420, maxWidth: .infinity, minHeight: 420, idealHeight: 420, maxHeight: .infinity, alignment: .top)
         }
+    }
+
+    private var tabSwitcher: some View {
+        ZStack(alignment: .top) {
+            Picker("", selection: $selectedTab) {
+                Text("计时").tag(Tab.timer)
+                Text("统计").tag(Tab.statistics)
+            }
+            .pickerStyle(.segmented)
+            .frame(height: tabSwitcherHeight)
+            .padding(.horizontal, 24)
+            .padding(.top, tabHeaderTopPadding)
+        }
+        .frame(height: tabHeaderHeight, alignment: .top)
+    }
+
+    @ViewBuilder
+    private var tabContent: some View {
+        Group {
+            switch selectedTab {
+            case .timer:
+                timerView
+            case .statistics:
+                StatisticsView()
+                    .padding(24)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private var timerView: some View {
         VStack(spacing: 16) {
-            Spacer()
+            Spacer(minLength: 36)
 
-            Text(model.phaseText.capitalized)
+            Text(model.phaseText)
                 .font(.title2.weight(.semibold))
-
+           
+            Spacer(minLength: 10)
+            
             Text(model.remainingText)
                 .font(.system(size: 56, weight: .bold, design: .rounded))
                 .monospacedDigit()
+
+            Spacer(minLength: 18)
 
             HStack(spacing: 12) {
                 if model.canStart {
@@ -81,22 +111,15 @@ struct ContentView: View {
                     .buttonStyle(.bordered)
                 }
 
-                if model.canStop {
-                    Button("停止") {
-                        Task { await model.stop() }
-                    }
-                    .buttonStyle(.bordered)
-                }
-
-                if model.canSkip {
-                    Button("跳过") {
-                        Task { await model.skip() }
+                if model.canTerminate {
+                    Button("终止") {
+                        Task { await model.terminate() }
                     }
                     .buttonStyle(.bordered)
                 }
             }
 
-            Spacer()
+            Spacer(minLength: 84)
         }
         .padding(24)
     }

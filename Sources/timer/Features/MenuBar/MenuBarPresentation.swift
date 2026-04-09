@@ -17,6 +17,17 @@ public struct MenuBarPresenter: Sendable {
         let minutes = Int(snapshot.remaining) / 60
         let seconds = Int(snapshot.remaining) % 60
         let time = String(format: "%02d:%02d", minutes, seconds)
-        return .init(title: snapshot.phase.rawValue, subtitle: time)
+        return .init(title: phaseTitle(for: snapshot.phase), subtitle: time)
+    }
+
+    private func phaseTitle(for phase: PomodoroPhase) -> String {
+        switch phase {
+        case .focus:
+            return "专注"
+        case .shortBreak:
+            return "短休息"
+        case .longBreak:
+            return "长休息"
+        }
     }
 }

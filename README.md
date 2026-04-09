@@ -1,9 +1,9 @@
-# TimerApp
+# Tomatime
 
 一个面向 macOS 的番茄钟应用（SwiftUI + SwiftData + Swift Package）。
 
 当前版本包含：
-- 番茄钟完整流程：开始、暂停、继续、停止、跳过
+- 番茄钟完整流程：开始、暂停、继续、终止、跳过
 - 阶段完成确认页（在主窗口内切换，不弹新窗口）
 - 菜单栏状态与快捷操作
 - 本地持久化统计（周统计 + 最近 7 天图表）
@@ -28,7 +28,7 @@
 ## 快速开始
 1. 克隆仓库
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/cyann7/timer.git
 cd TimerApp
 ```
 2. 运行测试
@@ -39,13 +39,13 @@ swift test
 ```bash
 open TimerApp.xcodeproj
 ```
-4. 选择 `TimerApp` scheme，运行 macOS target。
+4. 选择 `TimerApp` scheme，运行 macOS target（产物名称为 `Tomatime`）。
 
 ## 主要功能说明
 - 关闭主窗口不会退出应用，计时继续进行
 - 点击状态栏图标或 Dock 图标可恢复主窗口
 - 到点后会进入阶段完成页，可选择继续下一阶段或返回主页面
-- 统计页展示本周完成番茄数、专注分钟数及每日柱状图
+- 统计页展示本周完成番茄数、专注分钟数及每日番茄数量
 
 ## 开发文档
 - 技术框架：[Docs/technical-framework.md](Docs/technical-framework.md)
