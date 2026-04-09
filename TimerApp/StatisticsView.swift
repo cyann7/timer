@@ -5,9 +5,6 @@ struct StatisticsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("本周统计")
-                .font(.title.weight(.semibold))
-
             HStack(spacing: 24) {
                 StatCard(title: "完成番茄数", value: "\(model.weekPomodoros)")
                 StatCard(title: "专注分钟", value: "\(model.weekFocusMinutes)")
