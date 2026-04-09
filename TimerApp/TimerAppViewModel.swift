@@ -200,13 +200,25 @@ final class TimerAppViewModel: ObservableObject {
         weekPomodoros = summary.weekCompletedPomodoros
         weekFocusMinutes = Int(summary.weekTotalFocusDuration / 60)
 
-        // Build daily stats for the past 7 days
+        // Build daily stats for current week (Monday to Sunday)
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         var stats: [DailyStatItem] = []
+        let weekComponents = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today)
+        var mondayComponents = DateComponents()
+        mondayComponents.calendar = calendar
+        mondayComponents.timeZone = calendar.timeZone
+        mondayComponents.weekday = 2
+        mondayComponents.yearForWeekOfYear = weekComponents.yearForWeekOfYear
+        mondayComponents.weekOfYear = weekComponents.weekOfYear
 
-        for dayOffset in (0..<7).reversed() {
-            guard let date = calendar.date(byAdding: .day, value: -dayOffset, to: today) else { continue }
+        guard let monday = calendar.date(from: mondayComponents) else {
+            dailyStats = stats
+            return
+        }
+
+        for dayOffset in 0..<7 {
+            guard let date = calendar.date(byAdding: .day, value: dayOffset, to: monday) else { continue }
             if let dailyStat = summary.daily.first(where: { calendar.isDate($0.dayStart, inSameDayAs: date) }) {
                 stats.append(DailyStatItem(
                     date: date,

@@ -30,7 +30,7 @@ struct ContentView: View {
                         .frame(
                             width: proxy.size.width,
                             height: max(0, proxy.size.height - tabHeaderHeight),
-                            alignment: .topLeading
+                            alignment: .top
                         )
                 }
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
@@ -59,17 +59,19 @@ struct ContentView: View {
             switch selectedTab {
             case .timer:
                 timerView
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             case .statistics:
                 StatisticsView()
                     .padding(24)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     private var timerView: some View {
         VStack(spacing: 16) {
-            Spacer(minLength: 36)
+            Spacer(minLength: 12)
 
             Text(model.phaseText)
                 .font(.title2.weight(.semibold))
